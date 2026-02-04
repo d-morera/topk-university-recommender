@@ -1,0 +1,22 @@
+# data
+data/raw/
+data/processed/
+*.xlsx
+*.csv
+
+# jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# models
+models/*.pkl
+models/*.joblib
+
+# system
+.DS_Store
