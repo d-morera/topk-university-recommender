@@ -54,8 +54,12 @@ def clean_students_schema(
     df['sat_required'] = df['sat'].notna().astype(int)
 
     # valorizar
-    df['admitted'] = df['admitted'].map({"NO": 0, 'SELECTED': 1, "YES": 1})
+    df['admitted'] = df['admitted'].map({"SELECTED": 1, "YES": 1, "NO": 0, "NO PLAN": pd.NA}).astype("Int64")
     df['profile_score'] = 20 - df['profile_score']
+
+    df["peak"] = df["peak"].notna().astype(int)
+
+    df["school_curriculum"] = df["school_curriculum"].astype("string")
 
     return df
 
@@ -67,8 +71,5 @@ def null_students_schema(df_students_raw: pd.DataFrame) -> pd.DataFrame:
     df = df.dropna(subset=['degree'])
     df = df.dropna(subset=['admitted'])
     df['sat'] = df['sat'].fillna(0)
-
-    for i in range(len(df["peak"].unique())):
-            df["peak"] = df["peak"].replace(df["peak"].unique()[i], i)
 
     return df
