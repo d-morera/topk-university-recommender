@@ -1,10 +1,10 @@
-# 🎓 FLRecomendator — University Admission Predictor & Top-K Recommender
+# 🎓 Top-K University Recommender — University Admission Predictor & Top-K Recommender
 
-> *Given a student's academic profile, which universities should they actually apply to?*
+> *Given a student's academic profile and intended major, which universities should they actually apply to?*
 
-FLRecomendator is an end-to-end ML system that predicts a student's probability of university admission and uses that prediction to generate personalized, ranked recommendations — balancing **feasibility** (how likely is admission?) against **prestige** (how good is the university?).
+Top-K University Recommender is an end-to-end ML system that predicts a student's probability of university admission and uses that prediction to generate personalized, ranked recommendations — balancing **feasibility** (how likely is admission?) against **prestige** (how good is the university?).
 
-Built as a realistic portfolio project for a real admissions consultancy. Real data stays private; the pipeline, modeling decisions, and recommender logic are fully reproducible.
+Built as a realistic portfolio project for a <u>real admissions consultancy<u>. Real data from the organization stays private; the pipeline, modeling decisions, and recommender logic are fully reproducible.
 
 ---
 
@@ -22,7 +22,7 @@ Built as a realistic portfolio project for a real admissions consultancy. Real d
 ```
 Raw Data (Excel)
     │
-    ├─ data/raw/Five Lands Stats.xlsx      ← student applications
+    ├─ data/raw/Five Lands Stats.xlsx      ← student profiles and admission info
     └─ data/raw/University Ranking by Major 2025.xlsx  ← QS rankings per major
     │
     ▼
@@ -73,9 +73,9 @@ A sample schema is available in `data/sample/` for reference.
 **Requirements:** Python 3.10+ (developed on 3.14), Jupyter Lab.
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/FLRecomendator.git
-cd FLRecomendator
+# 1) Clone the repo
+git clone https://github.com/d-morera/topk-university-recommender.git
+cd topk-university-recommender
 
 # 2. Create and activate virtual environment
 python -m venv .venv
@@ -105,9 +105,8 @@ The notebook is organized into sequential sections:
 3. **Feature engineering** — generates `student_id`, encodes features, prepares `X` and `y`
 4. **Model training** — builds the preprocessing pipeline and fits the Random Forest
 5. **Threshold tuning** — selects a conservative threshold from OOF predictions
-6. **Ablation study** — compares models with and without `university` feature
-7. **Model export** — saves the bundle to `models/admission_prob_model.joblib`
-8. **Top-K recommendations** — loads the saved model and runs the recommender on sample students
+6. **Model export** — saves the bundle to `models/admission_prob_model.joblib`
+7. **Top-K recommendations** — runs the recommender on sample students in `src/app.py`
 
 ---
 
@@ -278,7 +277,8 @@ FLRecomendator/
 │   ├── processed/                 ← 🔒 Private — not in repo
 │   └── sample/                    ← Schema reference (no real data)
 │
-├── models/                        ← Generated locally — not in repo
+├── models/
+    └── admisssion_prob_model.joblib   ← Generated locally — not in repo
 ├── reports/
 │   ├── figures/
 │   └── tables/

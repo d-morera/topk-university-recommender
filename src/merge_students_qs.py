@@ -146,12 +146,25 @@ UNIVERDSITY_KEYWORDS_MAP = {
         }
 
 
+
 def university_mapping(university: str, uni_map: dict[str, str] = UNIVERDSITY_KEYWORDS_MAP) -> str:
+    """Normalize a university name for matching/merging.
+
+    Notes:
+        This is a deterministic string-normalization heuristic + optional overrides.
+
+    Args:
+        university: Raw university name.
+        uni_map: Optional dictionary of exact-name overrides.
+
+    Returns:
+        Normalized university name.
+    """
     university = university.upper().strip()
     university = university.replace("&", "AND")
-    university = university.replace(" OF ", " OF ")  # conserva estructura
+    university = university.replace(" OF ", " OF ")
     university = university.replace("U.", "UNIVERSITY")
-    university = university.replace("U ", "UNIVERSITY ")  # cuidado con "U" sola
+    university = university.replace("U ", "UNIVERSITY ")
     university = university.replace("THE ", "")
     university = university.replace("UNIVERSIDAD", "UNIVERSITY")
     university = university.replace(" DE ", " OF ")
@@ -159,17 +172,25 @@ def university_mapping(university: str, uni_map: dict[str, str] = UNIVERDSITY_KE
     university = university.replace("INTO ", "")
     university = university.replace("DEUSTU", "DEUSTO")
 
-
     if university in uni_map:
         return uni_map[university]
     return university
 
 
-# Privada
-# Categoriza los grados de fl segun los grados de qs, basandose en las 
-# palabras clave de DEGREE_KEYWORDS_MAP, pero permitiendo que un grado 
-# pueda pertenecer a varias categorias (ej: "Computer Science and Business" -> ["Computer Science", "Business"])
-def _categorizar_degree_multiple(degree, degree_map: dict[str, list[str]] = DEGREE_KEYWORDS_MAP) -> list[str]:
+def _categorize_degrees(degree, degree_map: dict[str, list[str]] = DEGREE_KEYWORDS_MAP) -> list[str]:
+    """Map a raw degree string to one-or-more QS categories (multi-label).
+
+    Notes:
+        Uses substring keyword matching against `DEGREE_KEYWORDS_MAP`. Some degrees can
+        legitimately map to multiple categories (e.g., "Computer Science and Business").
+
+    Args:
+        degree: Raw degree/program string.
+        degree_map: Category -> keyword list.
+
+    Returns:
+        List of matched categories, or ["Uncategorized"] if none match.
+    """
     degree_lower = degree.lower()
     categorias = []
     for category, keywords in degree_map.items():
@@ -180,12 +201,26 @@ def _categorizar_degree_multiple(degree, degree_map: dict[str, list[str]] = DEGR
 
 
 def degree_mapping(df_students: pd.DataFrame, degree_map: dict[str, list[str]] = DEGREE_KEYWORDS_MAP) -> tuple[pd.DataFrame, dict[str, list[str]]]:
+    """Expand student rows by mapping `degree` into QS subject categories.
+
+    This function returns:
+      1) an expanded DataFrame where `degree` is replaced by mapped categories and
+         exploded to one row per category
+      2) a summary dict of category -> list of degrees seen
+
+    Args:
+        df_students: Students DataFrame with a `degree` column.
+        degree_map: Mapping from QS category to keyword list.
+
+    Returns:
+        (expanded_df, mapping_summary)
+    """
     df = df_students.copy()
 
     df_students_degrees = df["degree"].unique()
     df_qs_degrees = {cat: [] for cat in degree_map.keys()}
 
-    # Asignación
+    # Build a quick summary: which raw degrees ended up in which category.
     for degree in df_students_degrees:
         degree_lower = degree.lower()
         matched = False
@@ -195,17 +230,17 @@ def degree_mapping(df_students: pd.DataFrame, degree_map: dict[str, list[str]] =
                 matched = True
                 break
         if not matched:
-            df_qs_degrees.setdefault('Uncategorized', []).append(degree)
+            df_qs_degrees.setdefault("Uncategorized", []).append(degree)
 
-    # Aplicar la función y expandir filas
-    df["degree"] = df["degree"].apply(lambda x: _categorizar_degree_multiple(x, degree_map=degree_map))
+    # Apply multi-label mapping and explode into one row per category.
+    df["degree"] = df["degree"].apply(lambda x: _categorize_degrees(x, degree_map=degree_map))
     df = df.explode("degree").reset_index(drop=True)
-    
+
     return df, df_qs_degrees
 
 
-# Mostrar la asignacion de carreras de df_students a categorias de df_qs
 def show_degree_mapping(df_qs_degrees: dict[str, list[str]]) -> None:
+    """Pretty-print the degree-to-category mapping summary."""
     for cat, items in df_qs_degrees.items():
         if items:
             print(f"\n{cat} ({len(items)}):")
@@ -214,17 +249,32 @@ def show_degree_mapping(df_qs_degrees: dict[str, list[str]]) -> None:
 
 
 def show_inner_universities(df_students: pd.DataFrame, df_qs: pd.DataFrame) -> None:
+    """Print basic intersection stats between student and QS university sets."""
     inner = set(df_students["university"].dropna().unique()) & set(df_qs["university"].dropna().unique())
-    print(f"Universidades únicas students: {len(df_students['university'].dropna().unique())}")
-    print(f"Universidades únicas qs: {len(df_qs['university'].dropna().unique())}")
-    print(f"Universidades en común: {len(inner)}")
+    print(f"Unique universities in students: {len(df_students['university'].dropna().unique())}")
+    print(f"Unique universities in QS: {len(df_qs['university'].dropna().unique())}")
+    print(f"Universities in common: {len(inner)}")
+
 
 
 def merge_students_qs(df_students: pd.DataFrame, df_qs: pd.DataFrame) -> pd.DataFrame:
+    """Left-join students with QS scores using (university, degree) as keys.
+
+    Notes:
+        This merge assumes QS has been cleaned to use the same canonical column names.
+        Country columns are harmonized by keeping `country_x` from students.
+
+    Args:
+        df_students: Cleaned/expanded students DataFrame.
+        df_qs: Cleaned QS DataFrame.
+
+    Returns:
+        Merged DataFrame with `qs_score` attached where available.
+    """
     df_students = df_students.copy()
     df_qs = df_qs.copy()
 
     df = pd.merge(df_students, df_qs, on=["university", "degree"], how="left")
-    df = df.drop(columns=["country_y"], errors='ignore').rename(columns={"country_x": "country"})
+    df = df.drop(columns=["country_y"], errors="ignore").rename(columns={"country_x": "country"})
 
     return df
