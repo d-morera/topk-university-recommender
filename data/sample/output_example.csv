@@ -1,0 +1,7 @@
+university,country,degree,qs_score,qs_norm,p_admit,final_score
+UNIVERSITY A,SPAIN,Business,92.1,1.0,0.88,0.916
+UNIVERSITY B,SPAIN,Business,85.4,0.762,0.81,0.796
+UNIVERSITY C,SPAIN,Business,78.8,0.524,0.74,0.676
+UNIVERSITY D,SPAIN,Business,71.0,0.238,0.66,0.534
+UNIVERSITY E,SPAIN,Business,66.2,0.067,0.60,0.440
+UNIVERSITY F,SPAIN,Business,60.5,0.0,0.52,0.364
